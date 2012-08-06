@@ -1,7 +1,9 @@
-CXX = g++-4.7
-CXXFLAGS = -std=c++11
+include Makefile.inc
 
-LDFLAGS = -I/usr/local/include/opencv -lm -lopencv_core -lopencv_highgui -lopencv_video -lopencv_imgproc
+
+CXXFLAGS = -std=c++11
+LDFLAGS = -I/usr/local/include/opencv -I/usr/local/include/opencv2 -lm -lopencv_objdetect -lopencv_core -lopencv_highgui -lopencv_video -lopencv_imgproc -Iinclude
+
 ALL = test
 
 all: $(ALL)
