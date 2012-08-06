@@ -1,8 +1,9 @@
 #include "math.h"
 #include "detection.hh"
 #include "manager.hh"
+#include <thread>
+#include <atomic>
 
-using namespace cv;
 
 IplImage* GetThresholdImage(IplImage* img){
   IplImage* imgHSV = cvCreateImage(cvGetSize(img), 8, 3);
@@ -13,16 +14,24 @@ IplImage* GetThresholdImage(IplImage* img){
   return imgThreshed;
 }
 
+
 Point2d GetCenter(Mat* im){
   Point2d center(im->cols/2, im->rows/2);
   return center;
 }
-  
+
+void doEyes(cv::Mat *frame){
+  detectFace( *frame);
+  detectEyes( *frame );
+  cv::imshow("video", *frame);
+}
 
 
 
-int main(int, char**)
+int main ()
 {
+  /* code */
+  // Load a bunch of xml files
   if (!face_cascade.load(face_cascade_name)){
     std::cout<<"Error loading face_cascade"<<std::endl;
     return -1;
@@ -35,24 +44,33 @@ int main(int, char**)
     std::cout<<"Error loading eyes_cascade2"<<std::endl;
     return -1;
   }
-
-
+  
+  
+  // Set up a thread pool
+  // open the camera
   VideoCapture cap(0); // open the default camera
   if(!cap.isOpened()){  // check if we succeeded
     std::cout<<"Failed to open camera! Bailing."<<std::endl;
     return -1;
   }
+  
+  cv::Mat *scaled = new cv::Mat();    
+  cv::Mat *raw = new cv::Mat(); 
+  cv::Mat *frame = new cv::Mat();
+  
+  cv::namedWindow("video", 1);
+  
+ while(true){
+  
+    std::thread t0 ( [&]() {cap  >> *frame;}) ;
+    t0.join();
+    cap  >> *frame;
 
-  Mat *scaled = new Mat();    
-  Mat *raw = new Mat(); 
-  Mat *frame = new Mat();
-  namedWindow("video", 1);
-  namedWindow("threshold", 1);
-    // namedWindow("zoomed", 1);
-  while(true)
-  {
-    cap >> *frame; // get a new frame from camera
+    // t2.join();
+    
 	//cvt syntax:(source, destination, conversion_code)
+    // Move the video window
+    moveWindow("video", frame->cols+50, 50);
     cvtColor(*frame, *raw, CV_BGR2HSV);
         // GaussianBlur(edges, edges, Size(7,7), 1.5, 1.5);
         // Canny(edges, edges, 0, 30, 3);
@@ -70,15 +88,21 @@ int main(int, char**)
     rectangle(*frame, pt1, pt2, cvScalar(0, 0, 255, 0), 1, 8, 0);
 		  
     Mat roi(*scaled, Rect(scaled->cols/2 - scaled->cols/(2*zoom), scaled->rows/2 - scaled->rows/(2*zoom), raw->cols, raw->rows));
-    detectFace(*frame);
-    detectEyes(*frame);
-    detectZoomEyes(roi);
-    moveWindow("video", frame->cols+50, 50);
-    imshow("video", *frame);
-    imshow("threshold", *raw);
-    imshow("zoomed", roi);
-    if(waitKey(30) >= 0) break;
+  
+  
+    std::thread t(doEyes,frame);
+    t.join();
+  
+    
+
+
   }
-    // the camera will be deinitialized automatically in VideoCapture destructor
+
+  
+  
+  
+  
+
+  
   return 0;
 }
