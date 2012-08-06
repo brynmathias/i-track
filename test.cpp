@@ -1,11 +1,11 @@
 #include "cv.h"
 #include "highgui.h"
-
+#include <assert.h>
 using namespace cv;
 
 
 cv::Mat getImage(int capDev, cv::VideoCapture cap){
-  if(!cap.isOpened()) assert "capture device";
+  assert(cap.isOpened() );
   cv::Mat image;
   cap >> image;
   return image;
